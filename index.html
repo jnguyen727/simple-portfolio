@@ -3,105 +3,453 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Johnny Nguyen</title>
-  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:wght@400;600&display=swap" rel="stylesheet">
+  <title>jnguyen@purdue:~</title>
   <style>
     body {
-      background-color: #000;
-      color: #fff;
-      font-family: 'STIX Two Text', serif;
+      background-color: #060912;
+      color: #c8e8f4;
+      font-family: 'Courier New', Courier, monospace;
       margin: 0;
       padding: 0;
-      line-height: 1.7;
-      font-size: 1.05rem;
+      font-size: 0.95rem;
+      line-height: 1.8;
     }
-    header, footer {
-      text-align: center;
-      padding: 2rem 0;
-      border-bottom: 1px solid #333;
+    .name-header {
+      color: #7ec8e3;
+      font-size: 1.25rem;
+      letter-spacing: 0.12em;
+      margin-bottom: 1.25rem;
+      text-shadow: 0 0 18px rgba(126,200,227,0.2);
     }
-    header h1 {
-      font-size: 2.2rem;
-      margin: 0;
-      letter-spacing: 0.5px;
-      font-weight: 600;
+    .ascii-art {
+      font-size: 0.48rem;
+      line-height: 1.15;
+      color: #1e3a4a;
+      margin-bottom: 2.5rem;
+      user-select: none;
+      overflow: hidden;
+      white-space: pre;
     }
-    nav {
-      text-align: center;
-      margin: 1rem 0;
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e3a4a; }
+    .terminal {
+      position: relative;
+      width: 78%;
+      max-width: 860px;
+      margin: 3rem auto;
+      padding-bottom: 4rem;
     }
-    nav a {
-      color: #aaa;
-      text-decoration: none;
-      margin: 0 1rem;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+    .login-line { color: #1e3a4a; margin-bottom: 3rem; }
+    .block { margin-bottom: 2.75rem; }
+    .prompt { color: #2a4a5a; margin-bottom: 0.5rem; }
+    .prompt .user {
+      color: #7ec8e3;
+      text-shadow: 0 0 10px rgba(126,200,227,0.6);
     }
-    nav a:hover {
-      color: #fff;
+    .prompt .path {
+      color: #4a90a8;
+      text-shadow: 0 0 7px rgba(74,144,168,0.5);
     }
-    nav img {
-      width: 20px;
-      height: 20px;
-      filter: invert(100%);
+    .prompt .cmd { color: #e8f4f8; }
+    .output { color: #c8e8f4; }
+    .output p { margin: 0 0 0.75rem 0; }
+    .output p:last-child { margin-bottom: 0; }
+    .ls-row { display: flex; flex-wrap: wrap; gap: 0.25rem 2rem; }
+    .ls-row a { text-decoration: none; }
+    .ls-row a:hover { text-decoration: underline; }
+    .ls-dir  { color: #4a90a8; }
+    .ls-file { color: #e8f4f8; }
+    .ls-exec { color: #7ec8e3; text-shadow: 0 0 6px rgba(126,200,227,0.4); }
+    #cmd-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e8f4f8;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.95rem;
+      caret-color: transparent;
+      width: 0;
+      min-width: 0;
     }
-    .container {
-      width: 80%;
-      max-width: 900px;
-      margin: 2rem auto;
+    .error { color: #5bacc4; }
+    .history-block { margin-bottom: 2rem; }
+    #statusline {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(6,9,18,0.95);
+      border-top: 1px solid #0e2030;
+      font-size: 0.8rem;
+      padding: 0.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      color: #2a4a5a;
+      z-index: 10000;
     }
-    article {
-      margin-bottom: 3rem;
-      border-bottom: 1px solid #222;
-      padding-bottom: 1.5rem;
+    #statusline .mode { color: #7ec8e3; font-weight: bold; }
+    #cmdline {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(6,9,18,0.95);
+      border-top: 1px solid #0e2030;
+      font-size: 0.8rem;
+      padding: 0.25rem 1.5rem;
+      color: #c8e8f4;
+      z-index: 10001;
+      font-family: 'Courier New', Courier, monospace;
     }
-    article h2 {
-      color: #fff;
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
+    #colon-input {
+      background: transparent; border: none; outline: none;
+      color: #c8e8f4; font-family: inherit; font-size: inherit;
+      caret-color: #7ec8e3; width: 80%;
     }
-    article p {
-      color: #ccc;
+    .cursor-block {
+      display: inline-block;
+      width: 0.55em; height: 1.05em;
+      background: #7ec8e3;
+      vertical-align: text-bottom;
     }
-    footer {
-      border-top: 1px solid #333;
-      font-size: 0.9rem;
-      color: #777;
-      padding-top: 1rem;
+    .cursor-active  { animation: cursor-blink 1s step-start infinite; }
+    .cursor-inactive { opacity: 0.2; animation: none; }
+    @keyframes cursor-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    #controls {
+      position: fixed;
+      top: 1rem; right: 1.5rem;
+      background: rgba(6,9,18,0.92);
+      border: 1px solid #0e2030;
+      color: #2a4a5a;
+      font-size: 0.78rem;
+      padding: 0.5rem 0.75rem;
+      line-height: 2;
+      user-select: none;
+      z-index: 10000;
+    }
+    #controls kbd { color: #3a6070; font-family: 'Courier New', Courier, monospace; }
+    @media (max-width: 700px) {
+      .terminal { width: 92%; margin: 1.5rem auto; padding-bottom: 5rem; }
+      body { font-size: 0.88rem; }
+      .block { margin-bottom: 2rem; }
+      .login-line { margin-bottom: 2rem; font-size: 0.8rem; }
+      #statusline { padding: 0.2rem 1rem; font-size: 0.72rem; }
+      #controls { display: none; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Johnny Nguyen</h1>
-    <nav>
-      <a href="https://github.com/jnguyen727" target="_blank">
-        GitHub
-      </a>
-      <a href="https://linkedin.com/in/jnguyen727" target="_blank">
-        LinkedIn
-      </a>
-      <a href="posts.html">Posts</a>
-    </nav>
-  </header>
+  <div class="terminal">
 
-  <div class="container">
-    <section>
-      <h2>About Me</h2>
-      <p>Hi, I’m Johnny Nguyen, a proud first-generation Computer Science student from Fort Wayne, Indiana, studying at Purdue University on the Systems Programming track.
-I’m passionate about software engineering, particularly in systems and software related to defense, security, and aerospace technologies.
-I’m involved in undergraduate research with RTX through Purdue’s The Data Mine, working on GPU-accelerated Python pipelines for RF signal classification.</p>
-      <p>This summer, I’ll be interning at Sandia National Laboratories in Albuquerque, NM, contributing to national security research and engineering.</p>
-      <p>This site is where I post or think about anything that interests me. 
-  If you wish to see more of my technical work, you can view my GitHub or LinkedIn.</p>
-    </section>
+    <div class="name-header">Johnny Nguyen</div>
+
+    <pre class="ascii-art">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣤⣤⣤⣤⣄⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⠶⣻⠝⠋⠠⠔⠛⠁⡀⠀⠈⢉⡙⠓⠶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⢋⣴⡮⠓⠋⠀⠀⢄⠀⠀⠉⠢⣄⠀⠈⠁⠀⡀⠙⢶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⢁⣔⠟⠁⠀⠀⠀⠀⠀⠈⡆⠀⠀⠀⠈⢦⡀⠀⠀⠘⢯⢢⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⠃⠀⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠸⠀⠀⠀⠀⠀⢳⣦⡀⠀⠀⢯⠀⠈⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⠆⡄⢠⢧⠀⣸⠀⠀⠀⠀⠀⠀⠀⢰⠀⣄⠀⠀⠀⠀⢳⡈⢶⡦⣿⣷⣿⢉⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣯⣿⣁⡟⠈⠣⡇⠀⠀⢸⠀⠀⠀⠀⢸⡄⠘⡄⠀⠀⠀⠈⢿⢾⣿⣾⢾⠙⠻⣾⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⣮⠇⢙⠷⢄⣸⡗⡆⠀⢘⠀⠀⠀⠀⢸⠧⠀⢣⠀⠀⠀⡀⡸⣿⣿⠘⡎⢆⠈⢳⣽⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⡟⢻⢷⣄⠀⠀⠀⠀⠀⠀⣾⣳⡿⡸⢀⣿⠀⠀⢸⠙⠁⠀⠼⠀⠀⠀⠀⢸⣇⠠⡼⡤⠴⢋⣽⣱⢿⣧⠀⢳⠈⢧⠀⢻⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⡿⣠⡣⠃⣿⠃⠀⠀⠀⠀⣸⣳⣿⠇⣇⢸⣿⢸⣠⠼⠀⠀⠀⡇⠀⡀⠉⠒⣾⢾⣆⢟⣳⡶⠓⠶⠿⢼⣿⣇⠈⡇⠘⢆⠈⢿⡘⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠈⢷⣍⣤⡶⣿⡄⠀⠀⠀⢠⣿⠃⣿⠀⡏⢸⣿⣿⠀⢸⠀⠀⢠⡗⢀⠇⠀⢠⡟⠀⠻⣾⣿⠀⠀⠀⠀⡏⣿⣿⡀⢹⡀⠈⢦⠈⢷⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢁⣤⣄⠁⠀⠀⠀⣼⡏⢰⣟⠀⣇⠘⣿⣿⣾⣾⣆⢀⣾⠃⣼⢠⣶⣿⣭⣷⣶⣾⣿⣤⠀⠀⠀⡇⡯⣍⣧⠀⣷⠄⠈⢳⡀⢻⡁⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠺⣿⡿⠀⠀⠀⠀⡿⢀⣾⣧⠀⡗⡄⢿⣿⡙⣽⣿⣟⠛⠚⠛⠙⠉⢹⣿⣿⣦⠀⢸⡿⠀⠀⠀⢰⡯⣌⢻⡀⢸⢠⢰⡄⠹⡷⣿⣦⣤⠤⣶⡇⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⣇⣾⣿⢸⢠⣧⢧⠘⣿⡇⠸⣿⢿⡆⠀⠀⠀⠀⠘⣯⠇⣿⠂⣸⢰⠀⠀⢀⣸⡧⣊⣼⡇⢸⣼⣸⣷⢣⢻⣄⠉⠙⠛⠉⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣳⣤⣴⣿⣏⣿⣾⢸⣿⡘⣧⣘⢿⣀⡙⣞⠁⠀⠀⠀⠀⢀⡬⢀⣉⢠⣧⡏⠀⠀⡎⣿⣿⣿⣿⠃⣸⡏⣿⣿⡎⢿⡘⡆⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⣠⣼⣿⣿⣿⣼⣿⣧⢿⣿⣿⣯⡻⠟⠀⠀⠀⠀⠀⠐⢯⠣⡽⢟⣽⠀⠀⢘⡇⣿⣿⣿⡟⣴⣿⣷⣿⣿⣧⣿⣷⡽⠀⠀⠀⠀⠀⠀⠀
+⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣼⣹⣿⣇⣸⣿⣿⣿⣻⣚⣿⡿⣿⣿⣦⣤⣀⡉⠃⠀⢀⣀⣤⡶⠛⡏⠀⢀⣼⢸⣿⣿⣿⣿⣿⣿⣿⢋⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀
+⣿⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠒⠒⠒⢭⢻⣽⣿⣿⣿⣿⣿⣿⢿⠿⣿⡏⠀⡼⠁⣀⣾⣿⣿⣿⣿⡿⣿⣿⣟⡻⣿⣿⡿⠣⠟⠀⠀⠀⠀⠀⠀⠀⠀
+⠸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢧⢿⣯⡽⠿⠛⠋⣵⢟⣋⣿⣶⣞⣤⣾⣿⣿⡟⢉⡿⢋⠻⢯⡉⢻⡟⢿⡅⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡞⣿⣆⡀⠀⡼⡏⠉⠚⠭⢉⣠⠬⠛⠛⢁⡴⣫⠖⠁⠀⠀⣩⠟⠁⣸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠈⢷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣽⣿⣿⣾⠳⡙⣦⡤⠜⠊⠁⠀⣀⡴⠯⠾⠗⠒⠒⠛⠛⠛⠛⠛⠓⠿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠘⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢷⣻⣿⣿⠔⢪⠓⠬⢍⠉⣩⣽⢻⣤⣶⣦⠀⠀⠀⢀⣀⣤⣴⣾⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠹⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣾⡏⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣯⣿⣿⠀⠀⣇⠀⣠⠎⠁⢹⡎⡟⡏⣷⣶⠿⠛⡟⠛⠛⣫⠟⠉⢿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣷⠈⢷⡤⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣾⣷⡀⣀⣀⣷⡅⠀⠀⠈⣷⢳⡇⣿⠀⠀⣸⠁⢠⡾⣟⣛⣻⣟⡿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢯⢻⣏⡵⠿⠿⢤⣄⠀⢀⣿⢸⣹⣿⣀⣴⣿⣴⣿⣛⠋⠉⠉⡉⠛⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠘⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⡎⣿⣥⣶⠖⢉⣿⡿⣿⣿⡿⣿⣟⠿⠿⣿⣿⣿⡯⠻⣿⣿⣿⣷⡽⣿⡗⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⡘⣿⣩⠶⣛⣋⡽⠿⣷⢬⣙⣻⣿⣿⣿⣯⣛⠳⣤⣬⡻⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀
+⠀⣿⣛⣻⣿⡿⠿⠟⠗⠶⠶⠶⠶⠤⠤⢤⠤⡤⢤⣤⣤⣤⣤⣄⣀⣀⣀⣀⣀⣀⣀⣀⣣⢹⣷⣶⣿⣿⣦⣴⣟⣛⣯⣤⣿⣿⣿⣿⣿⣷⣌⣿⣿⣿⣿⣿⣿⣿⣤⣤⣤⣤⣤⣤⣄
+⠀⠉⠙⠛⠛⠛⠛⠛⠻⠿⠿⠿⠷⠶⠶⢶⣶⣶⣶⣶⣤⣤⣤⣤⣤⣥⣬⣭⣭⣉⣩⣍⣙⣏⣉⣏⣽⣶⣶⣶⣤⣤⣬⣤⣤⣾⣿⠶⠾⠿⠿⠿⠿⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠃
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠛⠛⠛⠛⠛⠛⠋⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</pre>
+
+    <div class="login-line" id="last-login"></div>
+
+    <div class="block">
+      <div class="prompt"><span class="user">jnguyen@purdue</span>:<span class="path">~</span>$ <span class="cmd">cat about.txt</span></div>
+      <div class="output">
+        <p>Hi, I'm Johnny Nguyen, a first-generation CS student from Fort Wayne, Indiana,
+studying Computer Science on the Systems Programming track at Purdue. I write a lot of C and C++, and I'm most
+interested in systems programming. I have built low-level systems things like a Unix shell, a malloc implementation, and an HTTP server from scratch.</p>
+        <p>This summer I'm interning at Sandia National Laboratories in Albuquerque, NM, working on dataflow architecture simulation by modeling how general-purpose programs execute on spatial accelerators and exploring instruction-level optimizations using the Structural Simulation Toolkit (SST).</p>
+        <p>I also do undergraduate research with RTX through Purdue's The Data Mine,
+simulating RF signals for downstream classification models, and occasionally I
+build things for fun. For example, I have made a Bad Apple!! renderer in spectrograms.</p>
+        <p>This site is where I post things I find interesting. Check GitHub or LinkedIn
+for more of my work.</p>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="prompt"><span class="user">jnguyen@purdue</span>:<span class="path">~</span>$ <span class="cmd">cat .plan</span></div>
+      <div class="output">
+        <p>Right now I'm focusing on wrapping up the semester, studying for my finals, and preparing for my internship at Sandia this summer.</p>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="prompt"><span class="user">jnguyen@purdue</span>:<span class="path">~</span>$ <span class="cmd">ls</span></div>
+      <div class="ls-row">
+        <a href="posts.html"                                class="ls-dir">posts/</a>
+        <a href="resume.html"                               class="ls-file">resume(1)</a>
+        <a href="https://github.com/jnguyen727"   target="_blank" class="ls-exec">github</a>
+        <a href="https://linkedin.com/in/jnguyen727" target="_blank" class="ls-exec">linkedin</a>
+        <a href="mailto:nguye875@purdue.edu"                class="ls-exec">mail</a>
+      </div>
+    </div>
+
+    <div id="history"></div>
+
+    <div class="prompt" id="input-line">
+      <span class="user">jnguyen@purdue</span>:<span class="path">~</span>$ <input id="cmd-input" type="text" autocomplete="off" spellcheck="false"><span id="cursor-block" class="cursor-block cursor-inactive"></span>
+    </div>
+
+    <div style="color:#333; font-size:0.8rem; margin-top:3rem;">&copy; 2026 Johnny Nguyen</div>
+
   </div>
 
-  <footer>
-    <p>&copy; 2025 Johnny Nguyen</p>
-  </footer>
+  <div id="statusline">
+    <span id="status-left">jnguyen@purdue:~</span>
+    <span id="mode-label" class="mode">-- NORMAL --</span>
+    <span id="status-pct">top</span>
+  </div>
+  <div id="cmdline">:<input id="colon-input" type="text" autocomplete="off" spellcheck="false"></div>
+
+  <script>
+    // Last login
+    const d = new Date();
+    const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('last-login').textContent =
+      `Last login: ${days[d.getDay()]} ${months[d.getMonth()]} ${String(d.getDate()).padStart(2,' ')} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${d.getFullYear()} on data.cs.purdue.edu`;
+
+    const input       = document.getElementById('cmd-input');
+    const history     = document.getElementById('history');
+    const modeLabel   = document.getElementById('mode-label');
+    const colonInput  = document.getElementById('colon-input');
+    const cmdlineEl   = document.getElementById('cmdline');
+    const statusLeft  = document.getElementById('status-left');
+    const cursorBlock = document.getElementById('cursor-block');
+
+    function resizeInput() { input.style.width = input.value.length + 'ch'; }
+
+    const PROMPT_HTML = `<span class="user">jnguyen@purdue</span>:<span class="path">~</span>$`;
+
+    const LS_HTML = `<div class="ls-row">
+      <a href="posts.html" class="ls-dir">posts/</a>
+      <a href="resume.html" class="ls-file">resume(1)</a>
+      <a href="https://github.com/jnguyen727" target="_blank" class="ls-exec">github</a>
+      <a href="https://linkedin.com/in/jnguyen727" target="_blank" class="ls-exec">linkedin</a>
+      <a href="mailto:nguye875@purdue.edu" class="ls-exec">mail</a>
+    </div>`;
+
+    const ABOUT_HTML = `
+      <p>Hi, I'm Johnny Nguyen, a first-generation CS student from Fort Wayne, Indiana,
+studying Computer Science on the Systems Programming track at Purdue. I write a lot of C and C++, and I'm most
+interested in systems programming. I have built low-level systems things like a Unix shell, a malloc implementation, and an HTTP server from scratch.</p>
+      <p>This summer I'm interning at Sandia National Laboratories in Albuquerque, NM, working on dataflow architecture simulation by modeling how general-purpose programs execute on spatial accelerators and exploring instruction-level optimizations using the Structural Simulation Toolkit (SST).</p>
+      <p>I also do undergraduate research with RTX through Purdue's The Data Mine,
+simulating RF signals for downstream classification models, and occasionally I
+build things for fun. For example, I have made a Bad Apple!! renderer in spectrograms.</p>
+      <p>This site is where I post things I find interesting. Check GitHub or LinkedIn
+for more of my work.</p>`;
+
+    const PLAN_HTML = `<p>Finishing sophomore year at Purdue. Starting my internship at Sandia National
+Laboratories this summer — working on dataflow accelerator simulation with SST.
+Still active on the RTX Data Mine RF simulation project.</p>`;
+
+    const HELP_HTML = `<p style="color:#666">— available commands —</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">cat about.txt</span> &nbsp;&nbsp; about me</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">cat .plan</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; what i'm working on</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">ls</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; links (github, linkedin, posts, resume)</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">cd posts/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; go to posts page</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">man johnny</span> &nbsp;&nbsp;&nbsp;&nbsp; open resume</p>
+<p>&nbsp;&nbsp;<span style="color:#ddd">clear</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; clear the terminal</p>
+<p style="color:#444; margin-top:0.5rem">j/k · Ctrl+d/u · gg/G &nbsp;·&nbsp; <span style="color:#555">Esc</span> then <span style="color:#555">:</span> for vim commands</p>`;
+
+    let cmdHistory = [], histIdx = -1, mode = 'normal';
+
+    function setMode(m) {
+      mode = m;
+      if (m === 'insert') {
+        modeLabel.textContent = '-- INSERT --';
+        cmdlineEl.style.display = 'none';
+      } else if (m === 'normal') {
+        modeLabel.textContent = '-- NORMAL --';
+        cmdlineEl.style.display = 'none';
+      } else if (m === 'command') {
+        modeLabel.textContent = '';
+        cmdlineEl.style.display = 'block';
+        colonInput.value = '';
+        colonInput.focus();
+      }
+    }
+
+    function showStatusMsg(msg, ms) {
+      const prev = statusLeft.textContent, prevColor = statusLeft.style.color;
+      statusLeft.style.color = '#5bacc4';
+      statusLeft.textContent = msg;
+      setTimeout(() => { statusLeft.textContent = prev; statusLeft.style.color = prevColor; }, ms);
+    }
+
+    function runColonCmd(cmd) {
+      const lo = cmd.trim().toLowerCase();
+      if (lo === 'q' || lo === 'q!') {
+        showStatusMsg('E45: \'readonly\' option is set (add ! to override)', 2500); return;
+      }
+      if (lo === 'w' || lo === 'wq' || lo === 'wq!') {
+        showStatusMsg('"index.html" [readonly] 1L, 1337B', 2000); return;
+      }
+      if (/^e(dit)?\s+/.test(lo)) {
+        const target = lo.replace(/^e(dit)?\s+/, '').trim();
+        if (target === 'posts' || target === 'posts/') { window.location.href = 'posts.html'; return; }
+        if (target === 'resume' || target === 'resume.html') { window.location.href = 'resume.html'; return; }
+        showStatusMsg(`E49: no file "${target}" in buffer`, 2000); return;
+      }
+      if (lo === 'help' || lo === 'h') { appendBlock(':help', HELP_HTML); return; }
+      if (lo === 'ls' || lo === 'ls!') { appendBlock(':ls', LS_HTML); return; }
+      showStatusMsg(`E492: Not an editor command: ${cmd}`, 2000);
+    }
+
+    colonInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const cmd = colonInput.value.trim();
+        setMode('normal');
+        if (cmd) runColonCmd(cmd);
+      } else if (e.key === 'Escape') {
+        setMode('normal');
+      }
+    });
+
+    colonInput.addEventListener('blur', () => { if (mode === 'command') setMode('normal'); });
+
+    function runCommand(raw) {
+      const cmd = raw.trim();
+      const lo  = cmd.toLowerCase();
+      if (!cmd) return '';
+      if (lo === 'ls' || lo === 'ls -l' || lo === 'ls -la' || lo === 'ls -a') return LS_HTML;
+      if (lo === 'cat about.txt' || lo === 'cat about') return ABOUT_HTML;
+      if (lo === 'cat .plan' || lo === 'cat plan') return PLAN_HTML;
+      if (lo === 'help' || lo === '--help') return HELP_HTML;
+      if (lo === 'whoami') return `<p>jnguyen</p>`;
+      if (lo === 'pwd') return `<p>/home/jnguyen</p>`;
+      if (lo === 'uname' || lo === 'uname -a') return `<p>Linux purdue 5.15.0-1 #1 SMP x86_64 GNU/Linux</p>`;
+      if (lo === 'cd posts' || lo === 'cd posts/' || lo === 'open posts') { window.location.href = 'posts.html'; return null; }
+      if (lo === 'man johnny' || lo === './resume' || lo === 'open resume' || lo === 'resume') { window.location.href = 'resume.html'; return null; }
+      if (lo === 'github' || lo === 'open github') { window.open('https://github.com/jnguyen727','_blank'); return `<p>opening github...</p>`; }
+      if (lo === 'linkedin' || lo === 'open linkedin') { window.open('https://linkedin.com/in/jnguyen727','_blank'); return `<p>opening linkedin...</p>`; }
+      if (lo === 'mail' || lo === 'email') { window.location.href = 'mailto:nguye875@purdue.edu'; return null; }
+      if (lo === 'clear') {
+        history.innerHTML = '';
+        document.querySelectorAll('.block').forEach(b => b.style.display = 'none');
+        document.getElementById('last-login').style.display = 'none';
+        return '';
+      }
+      return `<p class="error">bash: ${cmd}: command not found &nbsp; (try <span style="color:#ddd">help</span>)</p>`;
+    }
+
+    function appendBlock(cmdText, outputHTML) {
+      const block = document.createElement('div');
+      block.className = 'history-block';
+      block.innerHTML = `<div class="prompt">${PROMPT_HTML} <span class="cmd">${cmdText}</span></div>
+        <div class="output">${outputHTML}</div>`;
+      history.appendChild(block);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = input.value;
+        input.value = ''; resizeInput(); histIdx = -1;
+        if (val.trim()) cmdHistory.push(val);
+        const out = runCommand(val);
+        if (out !== null) appendBlock(val.replace(/&/g,'&amp;').replace(/</g,'&lt;'), out);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (histIdx < cmdHistory.length - 1) histIdx++;
+        input.value = cmdHistory[cmdHistory.length - 1 - histIdx] || ''; resizeInput();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (histIdx > 0) { histIdx--; input.value = cmdHistory[cmdHistory.length - 1 - histIdx]; }
+        else { histIdx = -1; input.value = ''; }
+        resizeInput();
+      } else if (e.key === 'Escape') {
+        input.blur(); setMode('normal');
+      }
+    });
+
+    input.addEventListener('input', resizeInput);
+
+    document.querySelector('.terminal').addEventListener('click', (e) => {
+      if (e.target.tagName !== 'A') input.focus();
+    });
+
+    input.addEventListener('focus', () => {
+      setMode('insert');
+      cursorBlock.classList.replace('cursor-inactive', 'cursor-active');
+    });
+    input.addEventListener('blur', () => {
+      if (mode === 'insert') setMode('normal');
+      cursorBlock.classList.replace('cursor-active', 'cursor-inactive');
+    });
+
+    appendBlock('help', HELP_HTML);
+    window.scrollTo(0, 0);
+    input.focus({ preventScroll: true });
+
+    const LINE = 40, HALF = () => Math.floor(window.innerHeight / 2);
+    let lastKey = '', lastKeyTime = 0;
+
+    function updateStatus() {
+      const scrolled = window.scrollY;
+      const total = document.body.scrollHeight - window.innerHeight;
+      const pct = total <= 0 ? 100 : Math.round((scrolled / total) * 100);
+      document.getElementById('status-pct').textContent =
+        scrolled <= 0 ? 'top' : pct >= 100 ? 'bot' : pct + '%';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (mode === 'command') return;
+      if (document.activeElement === input) return;
+      const now = Date.now(), key = e.key;
+      if      (key === 'j')              { e.preventDefault(); window.scrollBy(0,  LINE); }
+      else if (key === 'k')              { e.preventDefault(); window.scrollBy(0, -LINE); }
+      else if (key === 'd' && e.ctrlKey) { e.preventDefault(); window.scrollBy(0,  HALF()); }
+      else if (key === 'u' && e.ctrlKey) { e.preventDefault(); window.scrollBy(0, -HALF()); }
+      else if (key === 'f' && e.ctrlKey) { e.preventDefault(); window.scrollBy(0,  window.innerHeight * 0.9); }
+      else if (key === 'b' && e.ctrlKey) { e.preventDefault(); window.scrollBy(0, -window.innerHeight * 0.9); }
+      else if (key === 'G')              { e.preventDefault(); window.scrollTo(0, document.body.scrollHeight); }
+      else if (key === 'g' && lastKey === 'g' && now - lastKeyTime < 500) {
+        e.preventDefault(); window.scrollTo(0, 0); lastKey = ''; return;
+      }
+      else if (key === ':') { e.preventDefault(); setMode('command'); return; }
+      else if (key === 'i') { e.preventDefault(); input.focus(); }
+      lastKey = key; lastKeyTime = now;
+    });
+
+    window.addEventListener('scroll', updateStatus);
+    updateStatus();
+  </script>
+
+  <div id="controls">
+    <div><kbd>j / k</kbd> &nbsp;&nbsp; scroll</div>
+    <div><kbd>Ctrl+d/u</kbd> &nbsp; half page</div>
+    <div><kbd>gg / G</kbd> &nbsp;&nbsp; top / bottom</div>
+    <div><kbd>i</kbd> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; type command</div>
+    <div><kbd>:</kbd> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vim commands</div>
+  </div>
 </body>
 </html>
