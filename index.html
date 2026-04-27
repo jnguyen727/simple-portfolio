@@ -203,6 +203,7 @@ build things for fun. for example, i have made a <a href="https://www.youtube.co
       <div class="prompt"><span class="user">jnguyen@purdue</span>:<span class="path">~</span>$ <span class="cmd">ls</span></div>
       <div class="ls-row">
         <a href="posts.html"                                class="ls-dir">posts/</a>
+        <a href="courses.html"                              class="ls-dir">courses/</a>
         <a href="resume.html"                               class="ls-file">resume(1)</a>
         <a href="https://github.com/jnguyen727"   target="_blank" class="ls-exec">github</a>
         <a href="https://linkedin.com/in/jnguyen727" target="_blank" class="ls-exec">linkedin</a>
@@ -250,6 +251,7 @@ build things for fun. for example, i have made a <a href="https://www.youtube.co
 
     const LS_HTML = `<div class="ls-row">
       <a href="posts.html" class="ls-dir">posts/</a>
+      <a href="courses.html" class="ls-dir">courses/</a>
       <a href="resume.html" class="ls-file">resume(1)</a>
       <a href="https://github.com/jnguyen727" target="_blank" class="ls-exec">github</a>
       <a href="https://linkedin.com/in/jnguyen727" target="_blank" class="ls-exec">linkedin</a>
@@ -348,6 +350,7 @@ Still active on the RTX Data Mine RF simulation project.</p>`;
       if (lo === 'pwd') return `<p>/home/jnguyen</p>`;
       if (lo === 'uname' || lo === 'uname -a') return `<p>Linux purdue 5.15.0-1 #1 SMP x86_64 GNU/Linux</p>`;
       if (lo === 'cd posts' || lo === 'cd posts/' || lo === 'open posts') { window.location.href = 'posts.html'; return null; }
+      if (lo === 'cd courses' || lo === 'cd courses/' || lo === 'open courses') { window.location.href = 'courses.html'; return null; }
       if (lo === 'man johnny' || lo === './resume' || lo === 'open resume' || lo === 'resume') { window.location.href = 'resume.html'; return null; }
       if (lo === 'github' || lo === 'open github') { window.open('https://github.com/jnguyen727','_blank'); return `<p>opening github...</p>`; }
       if (lo === 'linkedin' || lo === 'open linkedin') { window.open('https://linkedin.com/in/jnguyen727','_blank'); return `<p>opening linkedin...</p>`; }
